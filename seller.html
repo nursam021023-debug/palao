@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Stores</title>
+    <link rel="stylesheet" href="seller.css">
+    <style>
+        .search-wrap {
+            display: flex;
+            justify-content: center;
+            margin: 16px auto 24px;
+            max-width: 480px;
+            padding: 0 16px;
+        }
+
+        .search-wrap input {
+            width: 100%;
+            padding: 10px 16px;
+            font-size: 14px;
+            border: 1.5px solid #ccc;
+            border-radius: 99px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-wrap input:focus {
+            border-color: #888;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-top: 24px;
+        }
+
+        .product-match {
+            font-size: 12px;
+            color: #155724;
+            background-color: #d4edda;
+            border-radius: 99px;
+            padding: 2px 10px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h2>SELLER STORES</h2>
+    <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Search shops or products..." oninput="filterStores()">
+    </div>
+    <div class="store-list" id="storeList"></div>
+    <p class="no-results" id="noResults" style="display:none;">No shops or products found.</p>
+    <button class="back-btn" onclick="goBack()">Back</button>
+    <script>
+        const storeList = document.getElementById("storeList");
+        const noResults = document.getElementById("noResults");
+        const stores = JSON.parse(localStorage.getItem("stores")) || [];
+        const products = JSON.parse(localStorage.getItem("products")) || [];
+
+        function renderStores(filteredStores, query) {
+            storeList.innerHTML = "";
+            if (filteredStores.length === 0) {
+                noResults.style.display = "block";
+                return;
+            }
+            noResults.style.display = "none";
+            filteredStores.forEach(store => {
+                const storeCard = document.createElement("div");
+                storeCard.classList.add("store-card");
+                storeCard.onclick = function() {
+                    localStorage.setItem("selectedStore", store.name);
+                    window.location.href = "shop.html";
+                };
+                // Find matching products for this store
+                const sellerUsername = store.seller || store.name;
+                const matchingProducts = query ? products.filter(p => p.seller === sellerUsername && p.name.toLowerCase().includes(query.toLowerCase())) : [];
+                const matchBadge = matchingProducts.length > 0 ? `<span class="product-match">Has "${query}" (${matchingProducts.length} product${matchingProducts.length > 1 ? 's' : ''})</span>` : "";
+                storeCard.innerHTML = `
+            <div class="store-img-wrap">
+                <img src="${store.photo}" alt="${store.name}">
+                <div class="store-overlay">
+                    <span>Visit Store</span>
+                </div>
+            </div>
+            <div class="store-info">
+                <h3>${store.name}</h3>
+                <p>${store.location}</p>
+                ${matchBadge}
+            </div>
+        `;
+                storeList.appendChild(storeCard);
+            });
+        }
+
+        function filterStores() {
+            const query = document.getElementById("searchInput").value.trim().toLowerCase();
+            if (!query) {
+                renderStores(stores, "");
+                return;
+            }
+            const filtered = stores.filter(store => {
+                const sellerUsername = store.seller || store.name;
+                // Match by store name or location
+                const storeMatch = store.name.toLowerCase().includes(query) || (store.location && store.location.toLowerCase().includes(query));
+                // Match by any product in the store
+                const productMatch = products.some(p => p.seller === sellerUsername && p.name.toLowerCase().includes(query));
+                return storeMatch || productMatch;
+            });
+            renderStores(filtered, query);
+        }
+        if (stores.length === 0) {
+            storeList.innerHTML = "<p class='empty'>No stores available yet.</p>";
+        } else {
+            renderStores(stores, "");
+        }
+
+        function goBack() {
+            window.location.href = "foruzer.html";
+        }
+
+    </script>
+</body>
+
+</html>

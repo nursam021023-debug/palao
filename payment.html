@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <link rel="stylesheet" href="payment.css">
+</head>
+
+<body>
+    <button class="back-btn" onclick="goBack()">&#8592; Back</button>
+    <h1 class="page-title">Payment</h1>
+    <div class="title-line"></div>
+    <div class="payment-body">
+        <!-- ORDER SUMMARY -->
+        <div class="section-card">
+            <h3 class="section-title">Order Summary</h3>
+            <div id="orderSummary"></div>
+            <div class="total-row">
+                <span>Total</span>
+                <span class="total-price" id="grandTotal">₱0</span>
+            </div>
+        </div>
+        <!-- GCASH PAYMENT -->
+        <div class="section-card">
+            <h3 class="section-title">Pay via GCash</h3>
+            <div class="gcash-info">
+                <div class="gcash-logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0066cc" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2" />
+                        <line x1="12" y1="18" x2="12" y2="18" stroke-width="3" />
+                    </svg>
+                    <span>GCash</span>
+                </div>
+                <div class="gcash-number-box">
+                    <p class="gcash-label">Send payment to:</p>
+                    <p class="gcash-number" id="gcashNumber">—</p>
+                    <p class="gcash-name" id="gcashName">—</p>
+                </div>
+            </div>
+            <!-- UPLOAD SCREENSHOT -->
+            <div class="upload-section">
+                <p class="upload-label">Upload GCash Screenshot</p>
+                <label class="upload-box" id="uploadBox">
+                    <div class="upload-placeholder" id="uploadPlaceholder">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        <p>Tap to upload receipt</p>
+                        <span>JPG, PNG supported</span>
+                    </div>
+                    <img id="screenshotPreview" src="" alt="Receipt" style="display:none;">
+                    <input type="file" id="screenshotInput" accept="image/*" style="display:none;" onchange="previewScreenshot(this)">
+                </label>
+            </div>
+            <!-- REFERENCE NUMBER -->
+            <div class="form-group">
+                <label>GCash Reference Number <span class="optional">(optional)</span></label>
+                <input type="text" id="referenceNum" placeholder="e.g. 1234567890">
+            </div>
+        </div>
+        <!-- DELIVERY ADDRESS -->
+        <div class="section-card">
+            <h3 class="section-title">Delivery Address</h3>
+            <div id="addressDisplay">
+                <p class="no-address">No default address found.</p>
+            </div>
+            <button class="change-addr-btn" onclick="window.location.href='address-book.html'"> Change Address </button>
+        </div>
+        <!-- CONFIRM BUTTON -->
+        <button class="confirm-btn" onclick="confirmPayment()">Confirm Payment</button>
+    </div>
+    <!-- SUCCESS MODAL -->
+    <div class="success-overlay" id="successOverlay" style="display:none;">
+        <div class="success-card">
+            <div class="success-icon">
+                <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="2.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+            </div>
+            <h2>Payment Submitted!</h2>
+            <p>Your order has been placed. The seller will confirm once payment is verified.</p>
+            <button class="success-btn" onclick="goHome()">Back to Home</button>
+        </div>
+    </div>
+    <script>
+        const currentCustomer = localStorage.getItem("currentCustomer");
+        if (!currentCustomer) {
+            alert("Please login first.");
+            window.location.href = "login.html";
+        }
+        // Load items — from checkout or buynow
+        const checkoutItems = JSON.parse(localStorage.getItem("checkoutItems_" + currentCustomer)) || [];
+        const buyNowItem = JSON.parse(localStorage.getItem("buynow_" + currentCustomer));
+        const items = checkoutItems.length > 0 ? checkoutItems : (buyNowItem ? [buyNowItem] : []);
+        if (items.length === 0) {
+            alert("No items to pay for.");
+            window.location.href = "cart.html";
+        }
+        // Render order summary
+        const summaryEl = document.getElementById("orderSummary");
+        let grandTotal = 0;
+        items.forEach(item => {
+            const subtotal = parseFloat(item.price) * (item.qty || 1);
+            grandTotal += subtotal;
+            summaryEl.innerHTML += `
+            <div class="order-item">
+                <img src="${item.image}" alt="${item.name}">
+                <div class="order-item-info">
+                    <p class="order-item-name">${item.name}</p>
+                    <p class="order-item-meta">Size: ${item.size || '—'} &nbsp;|&nbsp; Qty: ${item.qty || 1}</p>
+                    <p class="order-item-seller">${getStoreName(item.seller)}</p>
+                </div>
+                <span class="order-item-price">₱${subtotal.toFixed(0)}</span>
+            </div>
+        `;
+        });
+        document.getElementById("grandTotal").innerText = "₱" + grandTotal.toFixed(0);
+        // Get store name from seller username
+        function getStoreName(seller) {
+            const stores = JSON.parse(localStorage.getItem("stores")) || [];
+            const store = stores.find(s => s.seller === seller || s.name === seller);
+            return store ? store.name : seller;
+        }
+        // Load seller GCash info from first item's seller
+        const firstSeller = items[0]?.seller;
+        if (firstSeller) {
+            const profile = JSON.parse(localStorage.getItem("sellerProfile_" + firstSeller)) || {};
+            document.getElementById("gcashNumber").innerText = profile.gcashNumber || profile.phoneNumber || "—";
+            document.getElementById("gcashName").innerText = profile.ownerName || profile.storeName || firstSeller;
+        }
+        // Load default address
+        const addresses = JSON.parse(localStorage.getItem("addresses_" + currentCustomer)) || [];
+        const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
+        const addrEl = document.getElementById("addressDisplay");
+        if (defaultAddr) {
+            addrEl.innerHTML = `
+            <div class="address-item">
+                <p class="addr-name">${defaultAddr.fullName} &nbsp; <span class="addr-phone">${defaultAddr.phone}</span></p>
+                <p class="addr-street">${defaultAddr.street}</p>
+                <p class="addr-city">${defaultAddr.city}${defaultAddr.zip ? ', ' + defaultAddr.zip : ''}</p>
+                <span class="addr-tag">${defaultAddr.label || 'HOME'}</span>
+            </div>
+        `;
+        }
+        // Screenshot preview
+        let screenshotData = null;
+
+        function previewScreenshot(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                screenshotData = e.target.result;
+                const preview = document.getElementById("screenshotPreview");
+                const placeholder = document.getElementById("uploadPlaceholder");
+                preview.src = screenshotData;
+                preview.style.display = "block";
+                placeholder.style.display = "none";
+            };
+            reader.readAsDataURL(file);
+        }
+        // Confirm payment
+        function confirmPayment() {
+            if (!screenshotData) {
+                alert("Please upload your GCash payment screenshot.");
+                return;
+            }
+            const referenceNum = document.getElementById("referenceNum").value.trim();
+            // Save order to localStorage
+            const ordersKey = "orders_" + currentCustomer;
+            const orders = JSON.parse(localStorage.getItem(ordersKey)) || [];
+            items.forEach(item => {
+                orders.push({
+                    ...item,
+                    paymentMethod: "gcash",
+                    gcashScreenshot: screenshotData,
+                    referenceNum,
+                    address: defaultAddr || null,
+                    status: "to-receive",
+                    paidAt: new Date().toISOString()
+                });
+            });
+            localStorage.setItem(ordersKey, JSON.stringify(orders));
+            // Clear checkout items
+            localStorage.removeItem("checkoutItems_" + currentCustomer);
+            localStorage.removeItem("buynow_" + currentCustomer);
+            // Remove paid items from cart
+            const cartKey = "cart_" + currentCustomer;
+            let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+            const paidNames = items.map(i => i.name);
+            cart = cart.filter(i => !paidNames.includes(i.name));
+            localStorage.setItem(cartKey, JSON.stringify(cart));
+            // Show success
+            document.getElementById("successOverlay").style.display = "flex";
+        }
+
+        function goBack() {
+            window.location.href = "cart.html";
+        }
+
+        function goHome() {
+            window.location.href = "foruzer.html";
+        }
+
+    </script>
+</body>
+
+</html>

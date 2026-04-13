@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Orders</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            color: #2d2d2d;
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 16px 20px 0;
+            background: none;
+            border: none;
+            color: #5a7fc1;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background .15s;
+        }
+
+        .back-btn:hover {
+            background: #e8eef8;
+        }
+
+        .page-header {
+            padding: 10px 24px 0;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: #777;
+            margin-top: 2px;
+        }
+
+        .refresh-row {
+            text-align: center;
+            font-size: 11px;
+            color: #bbb;
+            padding: 10px 0 0;
+        }
+
+        .refresh-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-right: 4px;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        .order-list {
+            padding: 14px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .empty {
+            color: #aaa;
+            text-align: center;
+            padding: 60px 0;
+            font-size: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+        }
+
+        .order-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e4e9f4;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+            overflow: hidden;
+            animation: fadeUp .25s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .order-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px 8px;
+            border-bottom: 1px solid #f0f2f8;
+        }
+
+        .order-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .order-type-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .order-badge {
+            background: #e8f0fe;
+            color: #3a5fcf;
+        }
+
+        .reserve-badge {
+            background: #fff3e0;
+            color: #b05e00;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: #fff3cd;
+            color: #856404;
+            animation: pendingPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pendingPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(255, 193, 7, 0);
+            }
+        }
+
+        .order-date {
+            font-size: 11px;
+            color: #aaa;
+            white-space: nowrap;
+        }
+
+        .order-body {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px 10px;
+        }
+
+        .order-img {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            flex-shrink: 0;
+            background: #f4f4f4;
+        }
+
+        .order-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .order-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .order-detail {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .order-price {
+            color: #2a7d4f;
+        }
+
+        .order-seller {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .pending-notice {
+            margin: 0 16px 12px;
+            padding: 10px 14px;
+            background: #fffbea;
+            border: 1px solid #f5d478;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #7d5a00;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .pending-notice .pn-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .pending-notice strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(60px);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 11px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+            transition: transform .3s ease, opacity .3s ease;
+            opacity: 0;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+    </style>
+</head>
+
+<body>
+    <button class="back-btn" onclick="goBack()">&#8592; Back</button>
+    <div class="page-header">
+        <h1 class="page-title">⏳ Pending Orders</h1>
+        <p class="page-sub" id="customerLabel">—</p>
+    </div>
+    <div class="refresh-row">
+        <span class="refresh-dot"></span>Auto-refreshes every 10 seconds
+    </div>
+    <div class="order-list" id="orderList"></div>
+    <div class="toast" id="toast"></div>
+    <script>
+        const currentCustomer = localStorage.getItem("currentCustomer");
+        if (!currentCustomer) {
+            alert("Please login as customer first.");
+            window.location.href = "login.html";
+        }
+        document.getElementById("customerLabel").innerText = "Hello, " + currentCustomer + " 👋";
+        let prevCount = null;
+
+        function getMyPendingOrders() {
+            const orders = JSON.parse(localStorage.getItem("orders_" + currentCustomer)) || [];
+            const reservations = JSON.parse(localStorage.getItem("reservations_" + currentCustomer)) || [];
+            const all = [...orders.map((o, i) => ({
+                ...o,
+                _idx: i,
+                _type: "order",
+                status: o.status || "pending"
+            })), ...reservations.map((r, i) => ({
+                ...r,
+                _idx: i,
+                _type: "reservation",
+                status: r.status || "pending"
+            }))];
+            return all.filter(o => o.status === "pending");
+        }
+
+        function renderOrders() {
+            const orders = getMyPendingOrders();
+            if (prevCount !== null && orders.length < prevCount) {
+                showToast("A pending order has been updated by the seller!");
+            }
+            prevCount = orders.length;
+            const list = document.getElementById("orderList");
+            list.innerHTML = "";
+            if (orders.length === 0) {
+                list.innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">✅</div>
+                    <div>No pending orders!</div>
+                </div>`;
+                return;
+            }
+            orders.forEach(order => {
+                const card = document.createElement("div");
+                card.classList.add("order-card");
+                const isReservation = order._type === "reservation";
+                const date = order.paidAt || order.createdAt || order.date || "";
+                const displayDate = date ? new Date(date).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric"
+                }) : "—";
+                card.innerHTML = `
+                <div class="order-card-top">
+                    <div class="order-meta">
+                        <span class="order-type-badge ${isReservation ? 'reserve-badge' : 'order-badge'}">
+                            ${isReservation ? '📅 Reservation' : '🛒 Order'}
+                        </span>
+                        <span class="status-badge">🕐 Pending</span>
+                    </div>
+                    <span class="order-date">${displayDate}</span>
+                </div>
+ 
+                <div class="order-body">
+                    <img class="order-img" src="${order.image || ''}" alt="${order.name || ''}">
+                    <div class="order-info">
+                        <h3 class="order-name">${order.name || 'Item'}</h3>
+                        <p class="order-detail">Size: <strong>${order.size || '—'}</strong> &nbsp;|&nbsp; Qty: <strong>${order.qty || 1}</strong></p>
+                        <p class="order-detail">Price: <strong class="order-price">₱${(parseFloat(order.price || 0) * (order.qty || 1)).toFixed(0)}</strong></p>
+                        <p class="order-seller">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                            ${order.seller || '—'}
+                        </p>
+                        ${isReservation && order.date ? `<p class="order-detail">Reserve Date: <strong>${order.date}</strong></p>` : ''}
+                        ${order.referenceNum ? `<p class="order-detail">Ref #: <strong>${order.referenceNum}</strong></p>` : ''}
+                    </div>
+                </div>
+ 
+                <div class="pending-notice">
+                    <div class="pn-icon">⏳</div>
+                    <div>
+                        <strong>Waiting for seller approval</strong>
+                        Your order is currently being reviewed. Please wait for the seller to process it.
+                    </div>
+                </div>
+            `;
+                list.appendChild(card);
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 3000);
+        }
+        // Back button goes to customer-profile.html
+        function goBack() {
+            window.location.href = "customer-profile.html";
+        }
+        renderOrders();
+        setInterval(renderOrders, 10000);
+
+    </script>
+</body>
+
+</html>

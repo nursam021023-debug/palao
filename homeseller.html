@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DA LOCAL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="homeseller.css">
+</head>
+
+<body>
+    <header>
+        <input type="checkbox" id="toggler">
+        <label for="toggler" class="fas fa-bars"></label>
+        <a href="#" class="logo">D.LOC<span>.</span></a>
+        <nav class="navbar">
+            <a href="#home">home</a>
+            <a href="#about">about</a>
+        </nav>
+        <div class="icons">
+            <!-- Message icon -->
+            <a href="messages-seller.html" class="msg-icon-wrap" title="Messages">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+            </a>
+            <!-- Profile pic in header — click to go to seller profile -->
+            <img id="sellerPic" class="seller-avatar" src="" alt="Profile" onclick="window.location.href='profile-seller.html'" title="View Profile">
+            <button type="button" class="log-out-btn" onclick="logout()">Log Out</button>
+        </div>
+    </header>
+    <section class="home" id="home">
+        <div class="content">
+            <!-- Seller intro: pic + name side by side -->
+            <div class="seller-intro">
+                <img id="sellerPicBig" src="" alt="Profile" onclick="window.location.href='profile-seller.html'" title="View Profile">
+                <div class="seller-intro-text">
+                    <h3 id="welcomeName">WELCOME SELLER!!</h3>
+                    <span>───── sell with passion ─────</span>
+                </div>
+            </div>
+            <!-- Go to Dashboard -->
+            <a href="seller dashboard.html" class="btn">Put your products</a>
+            <button onclick="goToApproval()">Go to Approval</button>
+        </div>
+    </section>
+    <!-- ABOUT SECTION -->
+    <section class="about" id="about">
+        <h1 class="heading"><span>About</span> Us</h1>
+        <div class="video-container">
+            <video src="images/dalocalvid.mp4" loop autoplay muted playsinline></video>
+        </div>
+        <p class="description">DA LOCAL is a platform that connects customers with local sellers, offering a wide range of products from various shops. We aim to support local businesses and provide customers with unique, locally-made items.</p>
+    </section>
+    <script>
+        const currentSeller = localStorage.getItem("currentSeller");
+        if (!currentSeller) {
+            alert("Please login first.");
+            window.location.href = "seller login.html";
+        }
+        const sellers = JSON.parse(localStorage.getItem("sellers")) || [];
+        const sellerData = sellers.find(s => s.username === currentSeller);
+        if (sellerData && sellerData.profilePic) {
+            document.getElementById("sellerPic").src = sellerData.profilePic;
+            document.getElementById("sellerPicBig").src = sellerData.profilePic;
+        } else {
+            document.getElementById("sellerPic").src = "https://via.placeholder.com/38";
+            document.getElementById("sellerPicBig").src = "https://via.placeholder.com/100";
+        }
+        document.getElementById("welcomeName").innerText = "WELCOME, " + currentSeller.toUpperCase() + "!!";
+
+        function logout() {
+            localStorage.removeItem("currentSeller");
+            window.location.href = "seller login.html";
+        }
+
+        function goToApproval() {
+            window.location.href = "approval-of-order.html";
+        }
+
+    </script>
+</body>
+
+</html>

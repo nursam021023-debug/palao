@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Approval</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            color: #2d2d2d;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* ── HEADER ── */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 16px 20px 0;
+            background: none;
+            border: none;
+            color: #5a7fc1;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background .15s;
+        }
+
+        .back-btn:hover {
+            background: #e8eef8;
+        }
+
+        .page-header {
+            padding: 10px 24px 0;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: #777;
+            margin-top: 2px;
+        }
+
+        /* ── CONTROLS ── */
+        .controls {
+            padding: 14px 20px 0;
+        }
+
+        .search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            border: 1px solid #dde3ef;
+            border-radius: 10px;
+            padding: 9px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+        }
+
+        .search-wrap svg {
+            color: #aaa;
+            flex-shrink: 0;
+        }
+
+        .search-wrap input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 14px;
+            background: transparent;
+            color: #333;
+        }
+
+        /* ── FILTER TABS ── */
+        .filter-tabs {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            padding-bottom: 4px;
+        }
+
+        .tab {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1.5px solid #d0d7e8;
+            background: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            color: #5a6a8a;
+            cursor: pointer;
+            transition: all .15s;
+            white-space: nowrap;
+        }
+
+        .tab.active,
+        .tab:hover {
+            background: #1a1a2e;
+            color: #fff;
+            border-color: #1a1a2e;
+        }
+
+        /* ── ORDER CARDS ── */
+        .order-list {
+            padding: 14px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .empty {
+            color: #aaa;
+            text-align: center;
+            padding: 40px 0;
+            font-size: 15px;
+        }
+
+        .order-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e4e9f4;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+            overflow: hidden;
+            animation: fadeUp .25s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .order-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px 8px;
+            border-bottom: 1px solid #f0f2f8;
+        }
+
+        .order-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .order-type-badge,
+        .status-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            letter-spacing: .3px;
+        }
+
+        .order-badge {
+            background: #e8f0fe;
+            color: #3a5fcf;
+        }
+
+        .reserve-badge {
+            background: #fff3e0;
+            color: #b05e00;
+        }
+
+        .order-date {
+            font-size: 11px;
+            color: #aaa;
+            white-space: nowrap;
+        }
+
+        /* ── BODY ── */
+        .order-body {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px 10px;
+        }
+
+        .order-img {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            flex-shrink: 0;
+            background: #f4f4f4;
+        }
+
+        .order-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .order-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .order-detail {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .order-price {
+            color: #2a7d4f;
+        }
+
+        .order-customer {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* ── GCASH ROW ── */
+        .gcash-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f0f9ff;
+            font-size: 12px;
+            color: #4a8caa;
+            border-top: 1px solid #e0f0fa;
+        }
+
+        .gcash-row.no-gcash {
+            background: #fafafa;
+            color: #bbb;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .view-gcash-btn {
+            margin-left: auto;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 6px;
+            background: #5bc8f5;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .view-gcash-btn:hover {
+            background: #38aad4;
+        }
+
+        /* ── STATUS CHANGER ── */
+        .status-changer {
+            padding: 10px 16px 12px;
+            border-top: 1px solid #f0f2f8;
+            background: #fafbff;
+        }
+
+        .status-changer-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #8a96b0;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 8px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 6px;
+        }
+
+        .status-btn {
+            padding: 8px 10px;
+            border-radius: 9px;
+            border: 1.5px solid transparent;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .status-btn:hover {
+            filter: brightness(.93);
+        }
+
+        .status-btn.current {
+            box-shadow: 0 0 0 2px #1a1a2e;
+        }
+
+        .status-btn.s-pending {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #f5d478;
+        }
+
+        .status-btn.s-to-ship {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #9eddea;
+        }
+
+        .status-btn.s-to-receive {
+            background: #cce5ff;
+            color: #004085;
+            border-color: #9ecfff;
+        }
+
+        .status-btn.s-reserved {
+            background: #fde8d8;
+            color: #7d3c00;
+            border-color: #f5c6a0;
+        }
+
+        .status-btn.s-delivered {
+            background: #d0f0e8;
+            color: #0a5940;
+            border-color: #7dd8bc;
+        }
+
+        /* ── MODAL ── */
+        .img-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .65);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .img-modal-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .img-modal-close {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .img-modal-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .img-modal-box img {
+            max-width: 70vw;
+            max-height: 65vh;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(60px);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 11px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+            transition: transform .3s ease, opacity .3s ease;
+            opacity: 0;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+    </style>
+</head>
+
+<body>
+    <button class="back-btn" onclick="goBack()">&#8592; Back</button>
+    <div class="page-header">
+        <h1 class="page-title">Order Approval</h1>
+        <p class="page-sub" id="sellerStore">—</p>
+    </div>
+    <div class="controls">
+        <div class="search-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search by item or customer..." oninput="renderOrders()">
+        </div>
+        <div class="filter-tabs" id="filterTabs">
+            <button class="tab active" onclick="setFilter('all', this)">All</button>
+            <button class="tab" onclick="setFilter('pending', this)">Pending</button>
+            <button class="tab" onclick="setFilter('to-ship', this)">To Ship</button>
+            <button class="tab" onclick="setFilter('to-receive', this)">To Receive</button>
+            <button class="tab" onclick="setFilter('reserved', this)">Reserved</button>
+            <button class="tab" onclick="setFilter('delivered', this)">Delivered</button>
+        </div>
+    </div>
+    <div class="order-list" id="orderList"></div>
+    <!-- GCash Screenshot Modal -->
+    <div class="img-modal-overlay" id="imgModalOverlay" onclick="closeImgModal()">
+        <div class="img-modal-box" onclick="event.stopPropagation()">
+            <button class="img-modal-close" onclick="closeImgModal()">&#10005;</button>
+            <p class="img-modal-label">GCash Payment Screenshot</p>
+            <img id="imgModalSrc" src="" alt="GCash Screenshot">
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        const currentSeller = localStorage.getItem("currentSeller");
+        if (!currentSeller) {
+            alert("Please login as seller first.");
+            window.location.href = "seller login.html";
+        }
+        const stores = JSON.parse(localStorage.getItem("stores")) || [];
+        const myStore = stores.find(s => s.seller === currentSeller);
+        document.getElementById("sellerStore").innerText = myStore ? myStore.name : currentSeller;
+        let currentFilter = "all";
+        // All possible statuses the seller can set (To Pay removed)
+        const ALL_STATUSES = [{
+            key: "pending",
+            label: "Pending",
+            icon: "🕐",
+            cls: "s-pending"
+        }, {
+            key: "to-ship",
+            label: "To Ship",
+            icon: "📦",
+            cls: "s-to-ship"
+        }, {
+            key: "to-receive",
+            label: "To Receive",
+            icon: "🚚",
+            cls: "s-to-receive"
+        }, {
+            key: "delivered",
+            label: "Delivered",
+            icon: "✅",
+            cls: "s-delivered"
+        }, {
+            key: "reserved",
+            label: "Reserved",
+            icon: "📅",
+            cls: "s-reserved"
+        }, ];
+
+        function getAllOrders() {
+            const customers = JSON.parse(localStorage.getItem("customers")) || [];
+            let allOrders = [];
+            customers.forEach(customer => {
+                const orders = JSON.parse(localStorage.getItem("orders_" + customer.username)) || [];
+                orders.forEach((order, idx) => {
+                    if (order.seller === currentSeller) {
+                        allOrders.push({
+                            ...order,
+                            customer: customer.username,
+                            orderIdx: idx,
+                            type: "order"
+                        });
+                    }
+                });
+                const reservations = JSON.parse(localStorage.getItem("reservations_" + customer.username)) || [];
+                reservations.forEach((res, idx) => {
+                    if (res.seller === currentSeller) {
+                        allOrders.push({
+                            ...res,
+                            customer: customer.username,
+                            orderIdx: idx,
+                            type: "reservation",
+                            status: res.status || "pending"
+                        });
+                    }
+                });
+            });
+            return allOrders;
+        }
+
+        function setFilter(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            btn.classList.add("active");
+            renderOrders();
+        }
+
+        function renderOrders() {
+            const query = document.getElementById("searchInput").value.trim().toLowerCase();
+            let orders = getAllOrders();
+            if (currentFilter !== "all") {
+                orders = orders.filter(o => {
+                    if (currentFilter === "reserved") return o.type === "reservation";
+                    return o.status === currentFilter;
+                });
+            }
+            if (query) {
+                orders = orders.filter(o => (o.name && o.name.toLowerCase().includes(query)) || (o.customer && o.customer.toLowerCase().includes(query)));
+            }
+            const list = document.getElementById("orderList");
+            list.innerHTML = "";
+            if (orders.length === 0) {
+                list.innerHTML = "<p class='empty'>No orders found.</p>";
+                return;
+            }
+            orders.forEach(order => {
+                const card = document.createElement("div");
+                card.classList.add("order-card");
+                const statusInfo = getStatusInfo(order.status);
+                const isReservation = order.type === "reservation";
+                const date = order.paidAt || order.createdAt || order.date || "";
+                const displayDate = date ? new Date(date).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric"
+                }) : "—";
+                const screenshotKey = encodeOrderScreenshot(order);
+                // Build status buttons
+                const statusButtons = ALL_STATUSES.map(s => {
+                    const isCurrent = order.status === s.key;
+                    return `<button 
+                    class="status-btn ${s.cls} ${isCurrent ? 'current' : ''}" 
+                    onclick="updateStatus('${order.customer}', ${order.orderIdx}, '${order.type}', '${s.key}')"
+                    title="Set to ${s.label}"
+                    ${isCurrent ? 'disabled' : ''}
+                >${s.icon} ${s.label}</button>`;
+                }).join("");
+                card.innerHTML = `
+                <div class="order-card-top">
+                    <div class="order-meta">
+                        <span class="order-type-badge ${isReservation ? 'reserve-badge' : 'order-badge'}">
+                            ${isReservation ? '📅 Reservation' : '🛒 Order'}
+                        </span>
+                        <span class="status-badge" style="background:${statusInfo.bg}; color:${statusInfo.color};">
+                            ${statusInfo.label}
+                        </span>
+                    </div>
+                    <span class="order-date">${displayDate}</span>
+                </div>
+ 
+                <div class="order-body">
+                    <img class="order-img" src="${order.image || ''}" alt="${order.name}">
+                    <div class="order-info">
+                        <h3 class="order-name">${order.name}</h3>
+                        <p class="order-detail">Size: <strong>${order.size || '—'}</strong> &nbsp;|&nbsp; Qty: <strong>${order.qty || 1}</strong></p>
+                        <p class="order-detail">Price: <strong class="order-price">₱${(parseFloat(order.price) * (order.qty || 1)).toFixed(0)}</strong></p>
+                        <p class="order-customer">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            ${order.customer}
+                        </p>
+                        ${isReservation && order.date ? `<p class="order-detail">Reserve Date: <strong>${order.date}</strong></p>` : ''}
+                        ${order.referenceNum ? `<p class="order-detail">Ref #: <strong>${order.referenceNum}</strong></p>` : ''}
+                    </div>
+                </div>
+ 
+                ${order.gcashScreenshot ? `
+                <div class="gcash-row">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5bc8f5" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/></svg>
+                    <span>GCash Payment</span>
+                    <button class="view-gcash-btn" onclick="viewGcash('${screenshotKey}')">View Screenshot</button>
+                </div>` : `<div class="gcash-row no-gcash">No payment screenshot</div>`}
+ 
+                <div class="status-changer">
+                    <div class="status-changer-label">Set Order Status</div>
+                    <div class="status-grid">
+                        ${statusButtons}
+                    </div>
+                </div>
+            `;
+                list.appendChild(card);
+            });
+        }
+
+        function encodeOrderScreenshot(order) {
+            const key = "tmp_" + order.customer + "_" + order.orderIdx + "_" + order.type;
+            window[key] = order.gcashScreenshot;
+            return key;
+        }
+
+        function viewGcash(key) {
+            const src = window[key];
+            if (!src) {
+                alert("Screenshot not found.");
+                return;
+            }
+            document.getElementById("imgModalSrc").src = src;
+            document.getElementById("imgModalOverlay").style.display = "flex";
+        }
+
+        function closeImgModal() {
+            document.getElementById("imgModalOverlay").style.display = "none";
+            document.getElementById("imgModalSrc").src = "";
+        }
+
+        function getStatusInfo(status) {
+            const map = {
+                "pending": {
+                    label: "Pending",
+                    bg: "#fff3cd",
+                    color: "#856404"
+                },
+                "to-ship": {
+                    label: "To Ship",
+                    bg: "#d1ecf1",
+                    color: "#0c5460"
+                },
+                "to-receive": {
+                    label: "To Receive",
+                    bg: "#cce5ff",
+                    color: "#004085"
+                },
+                "reserved": {
+                    label: "Reserved",
+                    bg: "#fde8d8",
+                    color: "#7d3c00"
+                },
+                "delivered": {
+                    label: "Delivered",
+                    bg: "#d0f0e8",
+                    color: "#0a5940"
+                },
+            };
+            return map[status] || {
+                label: status || "Unknown",
+                bg: "#e2e3e5",
+                color: "#383d41"
+            };
+        }
+
+        function updateStatus(customer, orderIdx, type, newStatus) {
+            if (type === "order") {
+                const orders = JSON.parse(localStorage.getItem("orders_" + customer)) || [];
+                if (orders[orderIdx]) {
+                    orders[orderIdx].status = newStatus;
+                    localStorage.setItem("orders_" + customer, JSON.stringify(orders));
+                }
+            } else {
+                const reservations = JSON.parse(localStorage.getItem("reservations_" + customer)) || [];
+                if (reservations[orderIdx]) {
+                    reservations[orderIdx].status = newStatus;
+                    localStorage.setItem("reservations_" + customer, JSON.stringify(reservations));
+                }
+            }
+            showToast("Status updated to: " + getStatusInfo(newStatus).label);
+            renderOrders();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2500);
+        }
+
+        function goBack() {
+            window.location.href = "homeseller.html";
+        }
+        renderOrders();
+
+    </script>
+</body>
+
+</html>

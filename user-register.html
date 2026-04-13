@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Register</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+    <div class="login-box">
+        <button class="back-btn" onclick="goBack()">✕</button>
+        <h2>Create Account</h2>
+        <input type="text" id="newUser" placeholder="Username">
+        <input type="password" id="newPass" placeholder="Password">
+        <label class="file-label" for="profilePic">Profile Picture</label>
+        <input type="file" id="profilePic" accept="image/*">
+        <img id="preview" src="" alt="Preview">
+        <button onclick="register()">Sign Up</button>
+        <div class="separator"></div>
+        <p>Already have an account? <a href="login.html">Login here</a></p>
+    </div>
+    <script>
+        document.getElementById("profilePic").addEventListener("change", function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById("preview");
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function register() {
+            const customers = JSON.parse(localStorage.getItem("customers")) || [];
+            const username = document.getElementById("newUser").value.trim();
+            const password = document.getElementById("newPass").value.trim();
+            const imageFile = document.getElementById("profilePic").files[0];
+            if (!username || !password) {
+                alert("Please fill in all fields.");
+                return;
+            }
+            if (!imageFile) {
+                alert("Please upload a profile picture.");
+                return;
+            }
+            const exists = customers.find(c => c.username === username);
+            if (exists) {
+                alert("Username already taken. Please choose another.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                customers.push({
+                    username,
+                    password,
+                    profilePic: e.target.result
+                });
+                localStorage.setItem("customers", JSON.stringify(customers));
+                alert("Registered Successfully! You can now login.");
+                window.location.href = "login.html";
+            };
+            reader.readAsDataURL(imageFile);
+        }
+
+        function goBack() {
+            window.location.href = "login.html";
+        }
+
+    </script>
+</body>
+
+</html>

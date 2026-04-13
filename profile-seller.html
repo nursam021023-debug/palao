@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Profile</title>
+    <link rel="stylesheet" href="profile-seller.css">
+</head>
+
+<body>
+    <!-- BACK BUTTON -->
+    <button class="back-btn" onclick="goBack()">&#8592; Back</button>
+    <!-- BANNER -->
+    <div class="banner" id="banner">
+        <div class="banner-bg" id="bannerBg"></div>
+        <div class="banner-overlay"></div>
+        <!-- Edit logo button -->
+        <label class="edit-logo-btn" title="Change Photo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg> Change Photo <input type="file" id="logoUpload" accept="image/*" style="display:none;">
+        </label>
+        <img class="banner-logo" id="storeLogo" src="" alt="Store Logo">
+        <div class="banner-info">
+            <div class="editable-row">
+                <h1 id="storeName">Shop Name</h1>
+                <span class="edit-link" onclick="editField('storeName', 'Shop Name')">Edit</span>
+            </div>
+            <div class="editable-row">
+                <p id="storeMotto">Motto</p>
+                <span class="edit-link" onclick="editField('storeMotto', 'Motto')">Edit</span>
+            </div>
+        </div>
+    </div>
+    <!-- INFO CARD -->
+    <div class="info-card">
+        <div class="info-row">
+            <span><strong>Owner of Shop:</strong> <span id="ownerName">—</span></span>
+            <span class="edit-link" onclick="editField('ownerName', 'Owner Name')">Edit</span>
+        </div>
+        <div class="info-row">
+            <span><strong>Phone Number:</strong> <span id="phoneNumber">—</span></span>
+            <span class="edit-link" onclick="editField('phoneNumber', 'Phone Number')">Edit</span>
+        </div>
+        <div class="info-row">
+            <span><strong>Social Media:</strong>
+                <a id="facebookLink" href="#" target="_blank">Facebook link</a> &nbsp; <a id="instagramLink" href="#" target="_blank">Instagram Link</a>
+            </span>
+            <span class="edit-link" onclick="editSocials()">Edit</span>
+        </div>
+        <div class="about-section">
+            <h2>About the Shop :</h2>
+            <div class="about-lines">
+                <p id="aboutShop" class="about-text">—</p>
+            </div>
+            <span class="edit-link" onclick="editField('aboutShop', 'About the Shop')">Edit</span>
+        </div>
+    </div>
+    <!-- SAVE BUTTON -->
+    <div class="save-wrap">
+        <button class="save-btn" onclick="saveProfile()">Save Profile</button>
+    </div>
+    <script>
+        const currentSeller = localStorage.getItem("currentSeller");
+        if (!currentSeller) {
+            alert("Please login first.");
+            window.location.href = "seller login.html";
+        }
+        // Load seller pic
+        const sellers = JSON.parse(localStorage.getItem("sellers")) || [];
+        const sellerData = sellers.find(s => s.username === currentSeller);
+        if (sellerData && sellerData.profilePic) {
+            document.getElementById("storeLogo").src = sellerData.profilePic;
+            document.getElementById("bannerBg").style.backgroundImage = `url('${sellerData.profilePic}')`;
+        }
+        // Load saved profile
+        const profile = JSON.parse(localStorage.getItem("sellerProfile_" + currentSeller)) || {};
+        if (profile.storeName) document.getElementById("storeName").innerText = profile.storeName;
+        if (profile.storeMotto) document.getElementById("storeMotto").innerText = profile.storeMotto;
+        if (profile.ownerName) document.getElementById("ownerName").innerText = profile.ownerName;
+        if (profile.phoneNumber) document.getElementById("phoneNumber").innerText = profile.phoneNumber;
+        if (profile.aboutShop) document.getElementById("aboutShop").innerText = profile.aboutShop;
+        if (profile.facebookLink) {
+            document.getElementById("facebookLink").href = profile.facebookLink;
+            document.getElementById("facebookLink").innerText = profile.facebookLink;
+        }
+        if (profile.instagramLink) {
+            document.getElementById("instagramLink").href = profile.instagramLink;
+            document.getElementById("instagramLink").innerText = profile.instagramLink;
+        }
+        // Edit logo upload
+        document.getElementById("logoUpload").addEventListener("change", function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById("storeLogo").src = e.target.result;
+                    document.getElementById("bannerBg").style.backgroundImage = `url('${e.target.result}')`;
+                    // Save new pic to sellers
+                    const sellers = JSON.parse(localStorage.getItem("sellers")) || [];
+                    const idx = sellers.findIndex(s => s.username === currentSeller);
+                    if (idx !== -1) {
+                        sellers[idx].profilePic = e.target.result;
+                        localStorage.setItem("sellers", JSON.stringify(sellers));
+                    }
+                    // Also save to stores list
+                    const stores = JSON.parse(localStorage.getItem("stores")) || [];
+                    const storeIdx = stores.findIndex(s => s.seller === currentSeller);
+                    if (storeIdx !== -1) {
+                        stores[storeIdx].photo = e.target.result;
+                        localStorage.setItem("stores", JSON.stringify(stores));
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        // Inline edit with prompt
+        function editField(id, label) {
+            const current = document.getElementById(id).innerText;
+            const newVal = prompt("Edit " + label + ":", current === "—" ? "" : current);
+            if (newVal !== null && newVal.trim() !== "") {
+                document.getElementById(id).innerText = newVal.trim();
+            }
+        }
+
+        function editSocials() {
+            const fb = prompt("Facebook link:", document.getElementById("facebookLink").href === "#" ? "" : document.getElementById("facebookLink").innerText);
+            if (fb !== null) {
+                document.getElementById("facebookLink").href = fb.trim() || "#";
+                document.getElementById("facebookLink").innerText = fb.trim() || "Facebook link";
+            }
+            const ig = prompt("Instagram link:", document.getElementById("instagramLink").href === "#" ? "" : document.getElementById("instagramLink").innerText);
+            if (ig !== null) {
+                document.getElementById("instagramLink").href = ig.trim() || "#";
+                document.getElementById("instagramLink").innerText = ig.trim() || "Instagram Link";
+            }
+        }
+
+        function saveProfile() {
+            const profile = {
+                storeName: document.getElementById("storeName").innerText,
+                storeMotto: document.getElementById("storeMotto").innerText,
+                ownerName: document.getElementById("ownerName").innerText,
+                phoneNumber: document.getElementById("phoneNumber").innerText,
+                aboutShop: document.getElementById("aboutShop").innerText,
+                facebookLink: document.getElementById("facebookLink").innerText,
+                instagramLink: document.getElementById("instagramLink").innerText,
+            };
+            localStorage.setItem("sellerProfile_" + currentSeller, JSON.stringify(profile));
+            // Also update store name in stores list
+            const stores = JSON.parse(localStorage.getItem("stores")) || [];
+            const idx = stores.findIndex(s => s.seller === currentSeller);
+            if (idx !== -1) {
+                stores[idx].name = profile.storeName;
+                localStorage.setItem("stores", JSON.stringify(stores));
+                localStorage.setItem("selectedStore", profile.storeName);
+            }
+            alert("Profile saved!");
+        }
+
+        function goBack() {
+            window.location.href = "homeseller.html";
+        }
+
+    </script>
+</body>
+
+</html>

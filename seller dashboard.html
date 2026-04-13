@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard</title>
+    <link rel="stylesheet" href="seller dashboard.css">
+    <style>
+        .product-card.unavailable {
+            opacity: 0.55;
+        }
+
+        .availability-badge {
+            display: inline-block;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-weight: bold;
+            margin: 4px 0;
+        }
+
+        .avail {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .unavail {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h2>Seller Dashboard</h2>
+    <p id="welcome"></p>
+    <div class="container">
+        <div class="form-box">
+            <h3>Add Product</h3>
+            <input type="text" id="productName" placeholder="Product Name">
+            <input type="number" id="productPrice" placeholder="Price" min="0">
+            <input type="file" id="productImage" accept="image/*">
+            <button class="add-btn" onclick="addProduct()">Add Product</button>
+        </div>
+        <h3>Your Products</h3>
+        <div id="productList"></div>
+        <div class="actions">
+            <button class="shop-btn" onclick="goToShop()">Go To Shop</button>
+            <button class="back-btn" onclick="goBack()">Back</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    <script>
+        // ===== LOGIN & REGISTRATION CHECK =====
+        const currentSeller = localStorage.getItem("currentSeller");
+        if (!currentSeller) {
+            alert("Please login first.");
+            window.location.href = "seller login.html";
+        } else {
+            const sellers = JSON.parse(localStorage.getItem("sellers")) || [];
+            const registeredSellers = JSON.parse(localStorage.getItem("registeredSellers")) || [];
+            const inSellers = sellers.find(s => s.username === currentSeller);
+            const inRegistered = registeredSellers.includes(currentSeller);
+            if (!inSellers && !inRegistered) {
+                alert("You are not a registered seller. Please register first.");
+                localStorage.removeItem("currentSeller");
+                window.location.href = "seller login.html";
+            }
+        }
+        // SHOW SELLER NAME
+        document.getElementById("welcome").innerText = "Welcome, " + currentSeller + "!";
+        // LOAD PRODUCTS
+        let products = JSON.parse(localStorage.getItem("products")) || [];
+        // ADD PRODUCT
+        function addProduct() {
+            const name = document.getElementById("productName").value.trim();
+            const price = document.getElementById("productPrice").value.trim();
+            const imageFile = document.getElementById("productImage").files[0];
+            if (!name || !price) {
+                alert("Please enter product name and price.");
+                return;
+            }
+            if (isNaN(price) || Number(price) <= 0) {
+                alert("Please enter a valid price greater than 0.");
+                return;
+            }
+            if (!imageFile) {
+                alert("Please upload a product image.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function() {
+                products.push({
+                    seller: currentSeller,
+                    name: name,
+                    price: Number(price).toFixed(2),
+                    image: reader.result,
+                    available: true
+                });
+                localStorage.setItem("products", JSON.stringify(products));
+                displayProducts();
+                document.getElementById("productName").value = "";
+                document.getElementById("productPrice").value = "";
+                document.getElementById("productImage").value = "";
+            };
+            reader.readAsDataURL(imageFile);
+        }
+        // DISPLAY PRODUCTS
+        function displayProducts() {
+            const list = document.getElementById("productList");
+            list.innerHTML = "";
+            const myProducts = products.filter(p => p.seller === currentSeller);
+            if (myProducts.length === 0) {
+                list.innerHTML = "<p>No products yet. Add your first one!</p>";
+                return;
+            }
+            products.forEach((p, index) => {
+                if (p.seller === currentSeller) {
+                    const isAvailable = p.available !== false;
+                    list.innerHTML += `
+            <div class="product-card ${isAvailable ? '' : 'unavailable'}">
+                <img src="${p.image}" alt="${p.name}" width="120">
+                <h4>${p.name}</h4>
+                <p>₱${p.price}</p>
+                <span class="availability-badge ${isAvailable ? 'avail' : 'unavail'}">
+                    ${isAvailable ? 'Available' : 'Not Available'}
+                </span><br>
+                <button onclick="toggleAvailability(${index})">
+                    ${isAvailable ? 'Mark as Unavailable' : 'Mark as Available'}
+                </button>
+                <button onclick="editProduct(${index})">Edit</button>
+                <button onclick="deleteProduct(${index})">Delete</button>
+            </div>
+            `;
+                }
+            });
+        }
+        // TOGGLE AVAILABILITY
+        function toggleAvailability(index) {
+            products[index].available = products[index].available === false ? true : false;
+            localStorage.setItem("products", JSON.stringify(products));
+            displayProducts();
+        }
+        // EDIT PRODUCT
+        function editProduct(index) {
+            const newName = prompt("Edit Product Name:", products[index].name);
+            const newPrice = prompt("Edit Price:", products[index].price);
+            if (newName && newPrice) {
+                if (isNaN(newPrice) || Number(newPrice) <= 0) {
+                    alert("Please enter a valid price.");
+                    return;
+                }
+                products[index].name = newName.trim();
+                products[index].price = Number(newPrice).toFixed(2);
+                localStorage.setItem("products", JSON.stringify(products));
+                displayProducts();
+            }
+        }
+        // DELETE PRODUCT
+        function deleteProduct(index) {
+            if (confirm("Delete this product?")) {
+                products.splice(index, 1);
+                localStorage.setItem("products", JSON.stringify(products));
+                displayProducts();
+            }
+        }
+        // LOGOUT
+        function logout() {
+            localStorage.removeItem("currentSeller");
+            window.location.href = "seller login.html";
+        }
+        // SHOP BUTTON
+        function goToShop() {
+            window.location.href = "shop.html";
+        }
+        // BACK BUTTON
+        function goBack() {
+            window.location.href = "homeseller.html";
+        }
+        // LOAD PRODUCTS WHEN PAGE OPENS
+        displayProducts();
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Seller</title>
+    <link rel="stylesheet" href="messages.css">
+</head>
+
+<body>
+    <div class="app">
+        <!-- HEADER -->
+        <div class="top-bar">
+            <button class="back-btn" onclick="goBack()">&#8592; Back</button>
+            <h2>Messages</h2>
+            <span id="seller-label"></span>
+        </div>
+        <div class="main">
+            <!-- SIDEBAR: conversation list -->
+            <div class="sidebar">
+                <div class="sidebar-header">Conversations</div>
+                <div id="contact-list"></div>
+            </div>
+            <!-- CHAT AREA -->
+            <div class="chat-area" id="chat-area">
+                <div class="no-chat">Select a conversation to start</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const currentSeller = localStorage.getItem("currentSeller");
+        if (!currentSeller) {
+            alert("Please login first.");
+            window.location.href = "seller login.html";
+        }
+        document.getElementById("seller-label").innerText = currentSeller;
+        let activeContact = null;
+        // Load all conversations for this seller
+        function getConversations() {
+            const all = JSON.parse(localStorage.getItem("messages")) || [];
+            const convos = {};
+            all.forEach(m => {
+                if (m.seller === currentSeller) {
+                    if (!convos[m.customer]) convos[m.customer] = [];
+                    convos[m.customer].push(m);
+                }
+            });
+            return convos;
+        }
+
+        function getUnread(customer) {
+            const all = JSON.parse(localStorage.getItem("messages")) || [];
+            return all.filter(m => m.seller === currentSeller && m.customer === customer && m.from === "customer" && !m.read).length;
+        }
+
+        function renderSidebar() {
+            const convos = getConversations();
+            const list = document.getElementById("contact-list");
+            list.innerHTML = "";
+            const customers = Object.keys(convos);
+            if (customers.length === 0) {
+                list.innerHTML = "<div class='empty-sidebar'>No messages yet</div>";
+                return;
+            }
+            customers.forEach(customer => {
+                const msgs = convos[customer];
+                const last = msgs[msgs.length - 1];
+                const unread = getUnread(customer);
+                const div = document.createElement("div");
+                div.className = "contact" + (activeContact === customer ? " active" : "");
+                div.innerHTML = `
+            <div class="avatar av-customer">${customer.substring(0,2).toUpperCase()}</div>
+            <div class="contact-info">
+                <div class="contact-name">${customer}</div>
+                <div class="contact-preview">${last ? last.text.substring(0,30) : ""}</div>
+            </div>
+            ${unread ? `<span class="unread">${unread}</span>` : ""}
+        `;
+                div.onclick = () => openChat(customer);
+                list.appendChild(div);
+            });
+        }
+
+        function openChat(customer) {
+            activeContact = customer;
+            // Mark messages as read
+            const all = JSON.parse(localStorage.getItem("messages")) || [];
+            all.forEach(m => {
+                if (m.seller === currentSeller && m.customer === customer && m.from === "customer") {
+                    m.read = true;
+                }
+            });
+            localStorage.setItem("messages", JSON.stringify(all));
+            renderSidebar();
+            const chatArea = document.getElementById("chat-area");
+            chatArea.innerHTML = `
+        <div class="chat-header">
+            <div class="avatar av-customer" style="width:28px;height:28px;font-size:11px">${customer.substring(0,2).toUpperCase()}</div>
+            <div>
+                <div class="chat-header-name">${customer}</div>
+                <div class="chat-header-status">Customer</div>
+            </div>
+        </div>
+        <div class="messages" id="msg-list"></div>
+        <div class="input-area">
+            <textarea class="msg-input" id="msg-input" placeholder="Type a message..." onkeydown="handleKey(event)"></textarea>
+            <button class="send-btn" onclick="sendMsg()">Send</button>
+        </div>
+    `;
+            renderMessages();
+        }
+
+        function renderMessages() {
+            const list = document.getElementById("msg-list");
+            if (!list) return;
+            const all = JSON.parse(localStorage.getItem("messages")) || [];
+            const msgs = all.filter(m => m.seller === currentSeller && m.customer === activeContact);
+            list.innerHTML = "";
+            msgs.forEach(m => {
+                const isSent = m.from === "seller";
+                const div = document.createElement("div");
+                div.className = "msg " + (isSent ? "sent" : "received");
+                div.innerHTML = `<div>${m.text}</div><div class="msg-time">${m.time}</div>`;
+                list.appendChild(div);
+            });
+            list.scrollTop = list.scrollHeight;
+        }
+
+        function sendMsg() {
+            const input = document.getElementById("msg-input");
+            if (!input || !input.value.trim() || !activeContact) return;
+            const text = input.value.trim();
+            const all = JSON.parse(localStorage.getItem("messages")) || [];
+            all.push({
+                seller: currentSeller,
+                customer: activeContact,
+                from: "seller",
+                text: text,
+                time: getTime(),
+                read: false
+            });
+            localStorage.setItem("messages", JSON.stringify(all));
+            input.value = "";
+            renderSidebar();
+            renderMessages();
+        }
+
+        function handleKey(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMsg();
+            }
+        }
+
+        function getTime() {
+            const d = new Date();
+            let h = d.getHours(),
+                m = d.getMinutes(),
+                ap = h >= 12 ? "PM" : "AM";
+            h = h % 12 || 12;
+            return h + ":" + (m < 10 ? "0" + m : m) + " " + ap;
+        }
+
+        function goBack() {
+            window.location.href = "homeseller.html";
+        }
+        // Auto-refresh every 3 seconds to get new messages
+        setInterval(() => {
+            renderSidebar();
+            if (activeContact) renderMessages();
+        }, 3000);
+        renderSidebar();
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address Book</title>
+    <link rel="stylesheet" href="address-book.css">
+</head>
+
+<body>
+    <button class="back-btn" onclick="goBack()">&#8592; Back</button>
+    <!-- ADD ADDRESS BUTTON -->
+    <div class="add-address-card" onclick="window.location.href='add-new-address.html'"> + Add Address </div>
+    <!-- ADDRESS LIST -->
+    <div class="address-list" id="addressList"></div>
+    <script>
+        const currentCustomer = localStorage.getItem("currentCustomer");
+        if (!currentCustomer) {
+            alert("Please login first.");
+            window.location.href = "login.html";
+        }
+
+        function loadAddresses() {
+            const addresses = JSON.parse(localStorage.getItem("addresses_" + currentCustomer)) || [];
+            const list = document.getElementById("addressList");
+            list.innerHTML = "";
+            if (addresses.length === 0) {
+                list.innerHTML = "<p class='empty'>No saved addresses yet.</p>";
+                return;
+            }
+            const card = document.createElement("div");
+            card.classList.add("address-card");
+            addresses.forEach((addr, index) => {
+                const isLast = index === addresses.length - 1;
+                card.innerHTML += `
+                <div class="address-item${!isLast ? ' has-divider' : ''}">
+                    <div class="addr-left">
+                        <div class="addr-icons">
+                            <svg width="18" height="22" viewBox="0 0 24 30" fill="none">
+                                <path d="M12 2C7.58 2 4 5.58 4 10c0 6.5 8 18 8 18s8-11.5 8-18c0-4.42-3.58-8-8-8z" fill="#2563eb"/>
+                                <circle cx="12" cy="10" r="3.2" fill="#fff"/>
+                            </svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="addr-details">
+                            <div class="addr-name-row">
+                                <span class="addr-name">${addr.fullName}</span>
+                                <span class="addr-phone">${addr.phone}</span>
+                            </div>
+                            <p class="addr-line">${addr.street}</p>
+                            <p class="addr-line">${addr.city}${addr.zip ? ', ' + addr.zip : ''}</p>
+                            <div class="addr-tags">
+                                ${addr.label ? `<span class="tag">${addr.label.toUpperCase()}</span>` : ''}
+                                ${addr.isDefault ? `<span class="tag default">Default Address</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <span class="edit-link" onclick="editAddress(${index})">Edit</span>
+                </div>
+            `;
+            });
+            list.appendChild(card);
+        }
+
+        function editAddress(index) {
+            localStorage.setItem("editAddressIndex", index);
+            window.location.href = "add-new-address.html";
+        }
+
+        function goBack() {
+            window.location.href = "customer-profile.html";
+        }
+        loadAddresses();
+
+    </script>
+</body>
+
+</html>
